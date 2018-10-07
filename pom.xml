@@ -8,6 +8,17 @@
     <artifactId>gcp-storage-wagon</artifactId>
     <version>0.1</version>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>maven-central-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>maven-central-staging</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <gcp.storage.version>1.40.0</gcp.storage.version>
         <gcp.nio.version>0.66.0-alpha</gcp.nio.version>
