@@ -1,6 +1,6 @@
 # gcp-storage-wagon
 
-[![Build Status](https://travis-ci.com/lahsivjar/gcp-storage-wagon.svg?branch=master)](https://travis-ci.com/lahsivjar/gcp-storage-wagon) [![Maven Central](https://img.shields.io/maven-central/v/com.lahsivjar/gcp-storage-wagon.svg)](https://img.shields.io/maven-central/v/com.google.cloud/google-cloud-nio.svg)
+[![Build Status](https://travis-ci.com/lahsivjar/gcp-storage-wagon.svg?branch=master)](https://travis-ci.com/lahsivjar/gcp-storage-wagon) [![Maven Central](https://img.shields.io/maven-central/v/com.lahsivjar/gcp-storage-wagon.svg)](https://img.shields.io/maven-central/v/com.google.cloud/google-cloud-nio.svg) [![Coverage Status](https://coveralls.io/repos/github/lahsivjar/gcp-storage-wagon/badge.svg?branch=master)](https://coveralls.io/github/lahsivjar/gcp-storage-wagon?branch=master)
 
 [Maven wagon](https://maven.apache.org/wagon/) provider for [Google Cloud Storage](https://cloud.google.com/storage/). It allows publishing and downloading of artifacts from Google Cloud Storage bucket.
 
