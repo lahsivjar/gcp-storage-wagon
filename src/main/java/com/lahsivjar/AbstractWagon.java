@@ -24,8 +24,18 @@ abstract class AbstractWagon implements Wagon {
     private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
     private int readTimeout = DEFAULT_READ_TIMEOUT;
     private boolean interactive = false;
-    private final SessionEventSupport sessionEventSupport = new SessionEventSupport();
-    private final TransferEventSupport transferEventSupport = new TransferEventSupport();
+    private final SessionEventSupport sessionEventSupport;
+    private final TransferEventSupport transferEventSupport;
+
+    AbstractWagon() {
+        this.sessionEventSupport = new SessionEventSupport();
+        this.transferEventSupport = new TransferEventSupport();
+    }
+
+    AbstractWagon(SessionEventSupport sessionEventSupport, TransferEventSupport transferEventSupport) {
+        this.sessionEventSupport = sessionEventSupport;
+        this.transferEventSupport = transferEventSupport;
+    }
 
     @Override
     public boolean supportsDirectoryCopy() {
