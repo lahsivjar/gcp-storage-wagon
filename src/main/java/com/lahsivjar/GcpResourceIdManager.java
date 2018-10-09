@@ -16,7 +16,8 @@ public final class GcpResourceIdManager {
     private GcpResourceIdManager() {
         // Order in the list defines priority
         projectIdProviders = ImmutableList.of(
-                new HashSeparatedGcpResourceIdProvider()
+                new HashSeparatedGcpResourceIdProvider(),
+                new EnvVariableBasedGcpResourceIdProvider()
         );
     }
 

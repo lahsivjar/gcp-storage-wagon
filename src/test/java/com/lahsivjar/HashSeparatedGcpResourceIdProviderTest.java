@@ -7,7 +7,7 @@ import org.mockito.Mockito;
 
 import java.util.NoSuchElementException;
 
-public class HashBasedGcpResourceIdProviderTest {
+public class HashSeparatedGcpResourceIdProviderTest {
 
     @Test
     public void testGet() {

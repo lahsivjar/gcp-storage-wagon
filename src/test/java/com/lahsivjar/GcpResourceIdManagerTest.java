@@ -11,6 +11,14 @@ public class GcpResourceIdManagerTest {
 
     private final GcpResourceIdManager resourceIdManager = GcpResourceIdManager.getInstance();
 
+    @Test
+    public void testPriorityOrder() {
+        final ImmutableList<GcpResourceIdProvider> providers = resourceIdManager.getProviders();
+        Assert.assertEquals(2, providers.size());
+        Assert.assertTrue(providers.get(0) instanceof HashSeparatedGcpResourceIdProvider);
+        Assert.assertTrue(providers.get(1) instanceof EnvVariableBasedGcpResourceIdProvider);
+    }
+
     @Test(expected = NoProjectIdFoundException.class)
     public void testNoProjectIdResolved() throws NoProjectIdFoundException, NoBucketFoundException {
         resourceIdManager.get(Mockito.mock(Repository.class));
