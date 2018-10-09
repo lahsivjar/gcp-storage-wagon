@@ -16,6 +16,7 @@
           <extension>
               <groupId>com.lahsivjar</groupId>
               <artifactId>gcp-storage-wagon</artifactId>
+              <!-- Replace gcp.storage.wagon.version with the correct version -->
               <version>${gcp.storage.wagon.version}</version>
           </extension>
       </extensions>
@@ -29,11 +30,11 @@ Maven loads parent pom before loading any wagon thus if the parent pom also reli
     <extension>
         <groupId>com.lahsivjar</groupId>
         <artifactId>gcp-storage-wagon</artifactId>
+        <!-- Replace gcp.storage.wagon.version with the correct version -->
         <version>${gcp.storage.wagon.version}</version>
     </extension>
 </extensions>
 ```
-NOTE: Replace `gcp.storage.wagon.version` with the correct version.
 
 3\. Setup distribution management in the target project to deploy artifacts to:
 
@@ -41,15 +42,17 @@ NOTE: Replace `gcp.storage.wagon.version` with the correct version.
   <distributionManagement>
       <snapshotRepository>
           <id>gcp-bucket-snapshot</id>
+          <!-- Replace gcp.project-id and gcp.maven.bucket with correct values -->
           <url>gs://${gcp.project-id}#${gcp.maven.bucket}/snapshot</url>
       </snapshotRepository>
       <repository>
           <id>gcp-bucket-release</id>
+          <!-- Replace gcp.project-id and gcp.maven.bucket with correct values -->
           <url>gs://${gcp.project-id}#${gcp.maven.bucket}/release</url>
       </repository>
   </distributionManagement>
 ```
-NOTE: the url must be of the form `gs://<gcp-poject-id>#<target-bucket>`
+__NOTE__: Check [Project Id Resolution](#gcp-project-id-resolution) section to find all supported ways of resolving GCP project id.
 
 4\. To use the deployed modules in another project add extension as described in step `2` to the target project and specify a repository with the wagon configured:
 
@@ -57,14 +60,25 @@ NOTE: the url must be of the form `gs://<gcp-poject-id>#<target-bucket>`
   <repositories>
       <repository>
           <id>gcp-bucket-snapshot</id>
+          <!-- Replace gcp.project-id and gcp.maven.bucket with correct values -->
           <url>gs://${gcp.project-id}#${gcp.maven.bucket}/snapshot</url>
       </repository>
       <repository>
           <id>gcp-bucket-release</id>
+          <!-- Replace gcp.project-id and gcp.maven.bucket with correct values -->
           <url>gs://${gcp.project-id}#${gcp.maven.bucket}/release</url>
       </repository>
   </repositories>
 ```
+__NOTE__: Check [Project Id Resolution](#gcp-project-id-resolution) section to find all supported ways of resolving GCP project id.
+
+## GCP Project Id resolution
+Project id of GCP can be resolved in the following two ways(in decreasing priority):
+
+1. By specifying it as part of the repository url. For example: `gs://${gcp.project-id}#${gcp.maven.bucket}/`
+2. By setting environment variable `WAGON_GCP_PROJECT_ID`. In this case the url must be of the form `gs://${gcp.maven.bucket}/...`
+
+__NOTE__: It is priority based so if project id can be resolved via a higher priority resolver then the lower priority won't be considered
 
 ## Issues
 
