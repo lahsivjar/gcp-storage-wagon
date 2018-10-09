@@ -99,11 +99,7 @@ public class GcpStorageWagon extends AbstractWagon {
         }
 
         fireGetStarted(resource, destination);
-        try {
-            downloadInternal(resource, blob, destination.toPath());
-        } catch (StorageException e) {
-            throw new TransferFailedException(String.format("Failed to read %s", resourceName), e);
-        }
+        downloadInternal(resource, blob, destination);
         fireGetCompleted(resource, destination);
     }
 
@@ -219,9 +215,9 @@ public class GcpStorageWagon extends AbstractWagon {
         return blob;
     }
 
-    private void downloadInternal(Resource resource, Blob blob, Path path) {
+    private void downloadInternal(Resource resource, Blob blob, File destination) throws TransferFailedException {
         final TransferEvent transferProgressEvent = buildTransferProgressEvent(resource, TransferEvent.REQUEST_GET);
-        try (OutputStream outputStream = Files.newOutputStream(path);
+        try (OutputStream outputStream = new FileOutputStream(destination);
              ReadChannel reader = this.storage.reader(blob.getBlobId())) {
             WritableByteChannel channel = Channels.newChannel(outputStream);
             ByteBuffer bytes = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
@@ -232,8 +228,10 @@ public class GcpStorageWagon extends AbstractWagon {
                 fireTransferProgress(transferProgressEvent, bytes.array(), limit);
                 bytes.clear();
             }
+        } catch (FileNotFoundException fe) {
+            throw new TransferFailedException(String.format("Failed to write to %s", destination));
         } catch (IOException e) {
-            throw new StorageException(e);
+            throw new TransferFailedException(String.format("Failed to read from %s and write to %s", resource, destination));
         }
     }
 
