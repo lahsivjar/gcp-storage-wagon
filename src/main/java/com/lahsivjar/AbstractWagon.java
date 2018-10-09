@@ -99,7 +99,7 @@ abstract class AbstractWagon implements Wagon {
 
     @Override
     public void setTimeout(int timeoutValue) {
-        this.connectionTimeout = connectionTimeout;
+        this.connectionTimeout = timeoutValue;
     }
 
     @Override

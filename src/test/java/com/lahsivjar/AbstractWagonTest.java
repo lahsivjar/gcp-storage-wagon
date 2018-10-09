@@ -3,13 +3,16 @@ package com.lahsivjar;
 import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
+import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.authentication.AuthenticationException;
+import org.apache.maven.wagon.authentication.AuthenticationInfo;
 import org.apache.maven.wagon.authorization.AuthorizationException;
-import org.apache.maven.wagon.events.SessionEvent;
-import org.apache.maven.wagon.events.SessionEventSupport;
-import org.apache.maven.wagon.events.TransferEvent;
-import org.apache.maven.wagon.events.TransferEventSupport;
+import org.apache.maven.wagon.events.*;
+import org.apache.maven.wagon.proxy.ProxyInfo;
+import org.apache.maven.wagon.proxy.ProxyInfoProvider;
+import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.resource.Resource;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +34,151 @@ public class AbstractWagonTest {
         spySessionEventSupport = Mockito.spy(new SessionEventSupport());
         spyTransferEventSupport = Mockito.spy(new TransferEventSupport());
         stubWagon = new StubWagon(spySessionEventSupport, spyTransferEventSupport);
+    }
+
+    @Test
+    public void testSupportsDirectoryCopy() {
+        Assert.assertTrue(this.stubWagon.supportsDirectoryCopy());
+    }
+
+    @Test
+    public void testConnect1() throws ConnectionException, AuthenticationException {
+        final Repository mockRepo = Mockito.mock(Repository.class);
+        this.stubWagon.connect(mockRepo);
+        Assert.assertEquals(mockRepo, this.stubWagon.getRepository());
+        testConnectInternal();
+    }
+
+    @Test
+    public void testConnect2() throws ConnectionException, AuthenticationException {
+        final Repository mockRepo = Mockito.mock(Repository.class);
+        final ProxyInfo proxyInfo = Mockito.mock(ProxyInfo.class);
+        this.stubWagon.connect(mockRepo, proxyInfo);
+        Assert.assertEquals(mockRepo, this.stubWagon.getRepository());
+        testConnectInternal();
+    }
+
+    @Test
+    public void testConnect3() throws ConnectionException, AuthenticationException {
+        final Repository mockRepo = Mockito.mock(Repository.class);
+        final AuthenticationInfo authInfo = Mockito.mock(AuthenticationInfo.class);
+        this.stubWagon.connect(mockRepo, authInfo);
+        Assert.assertEquals(mockRepo, this.stubWagon.getRepository());
+        testConnectInternal();
+    }
+
+    @Test
+    public void testConnect4() throws ConnectionException, AuthenticationException {
+        final Repository mockRepo = Mockito.mock(Repository.class);
+        final ProxyInfoProvider proxyInfoProvider = Mockito.mock(ProxyInfoProvider.class);
+        this.stubWagon.connect(mockRepo, proxyInfoProvider);
+        Assert.assertEquals(mockRepo, this.stubWagon.getRepository());
+        testConnectInternal();
+    }
+
+    @Test
+    public void testConnect5() throws ConnectionException, AuthenticationException {
+        final Repository mockRepo = Mockito.mock(Repository.class);
+        final ProxyInfoProvider proxyInfoProvider = Mockito.mock(ProxyInfoProvider.class);
+        final AuthenticationInfo authInfo = Mockito.mock(AuthenticationInfo.class);
+        this.stubWagon.connect(mockRepo, authInfo, proxyInfoProvider);
+        Assert.assertEquals(mockRepo, this.stubWagon.getRepository());
+        testConnectInternal();
+    }
+
+    @Test
+    public void testConnect6() throws ConnectionException, AuthenticationException {
+        final Repository mockRepo = Mockito.mock(Repository.class);
+        final ProxyInfo proxyInfo = Mockito.mock(ProxyInfo.class);
+        final AuthenticationInfo authInfo = Mockito.mock(AuthenticationInfo.class);
+        this.stubWagon.connect(mockRepo, authInfo, proxyInfo);
+        Assert.assertEquals(mockRepo, this.stubWagon.getRepository());
+        testConnectInternal();
+    }
+
+    private void testConnectInternal() {
+        Mockito.verify(this.spySessionEventSupport).fireSessionOpening(
+                Mockito.argThat((SessionEvent se) -> se.getEventType() == SessionEvent.SESSION_OPENING));
+        Mockito.verify(this.spySessionEventSupport).fireSessionOpened(
+                Mockito.argThat((SessionEvent se) -> se.getEventType() == SessionEvent.SESSION_OPENED));
+    }
+
+    @Test
+    public void testDisconnect() throws ConnectionException {
+        this.stubWagon.disconnect();
+        Mockito.verify(this.spySessionEventSupport).fireSessionDisconnecting(
+                Mockito.argThat((SessionEvent se) -> se.getEventType() == SessionEvent.SESSION_DISCONNECTING));
+        Mockito.verify(this.spySessionEventSupport).fireSessionDisconnected(
+                Mockito.argThat((SessionEvent se) -> se.getEventType() == SessionEvent.SESSION_DISCONNECTED));
+    }
+
+    @Test
+    public void testTimeout() {
+        final int timeout = 9999;
+        Assert.assertEquals(Wagon.DEFAULT_CONNECTION_TIMEOUT, this.stubWagon.getTimeout());
+        this.stubWagon.setTimeout(timeout);
+        Assert.assertEquals(timeout, this.stubWagon.getTimeout());
+    }
+
+    @Test
+    public void testReadTimeout() {
+        final int timeout = 9999;
+        Assert.assertEquals(Wagon.DEFAULT_READ_TIMEOUT, this.stubWagon.getReadTimeout());
+        this.stubWagon.setReadTimeout(timeout);
+        Assert.assertEquals(timeout, this.stubWagon.getReadTimeout());
+    }
+
+    @Test
+    public void testInteractive() {
+        Assert.assertFalse(this.stubWagon.isInteractive());
+        this.stubWagon.setInteractive(true);
+        Assert.assertTrue(this.stubWagon.isInteractive());
+    }
+
+    @Test
+    public void testAddSessionListener() {
+        final SessionListener mockSessionListener = Mockito.mock(SessionListener.class);
+        this.stubWagon.addSessionListener(mockSessionListener);
+        Assert.assertTrue(spySessionEventSupport.hasSessionListener(mockSessionListener));
+    }
+
+    @Test
+    public void testRemoveSessionListener() {
+        final SessionListener mockSessionListener = Mockito.mock(SessionListener.class);
+        this.stubWagon.addSessionListener(mockSessionListener);
+        Assert.assertTrue(spySessionEventSupport.hasSessionListener(mockSessionListener));
+        this.stubWagon.removeSessionListener(mockSessionListener);
+        Assert.assertFalse(spySessionEventSupport.hasSessionListener(mockSessionListener));
+    }
+
+    @Test
+    public void testHasSessionListener() {
+        final SessionListener mockSessionListener = Mockito.mock(SessionListener.class);
+        this.spySessionEventSupport.addSessionListener(mockSessionListener);
+        Assert.assertTrue(this.stubWagon.hasSessionListener(mockSessionListener));
+    }
+
+    @Test
+    public void testAddTransferListener() {
+        final TransferListener mockTransferListener = Mockito.mock(TransferListener.class);
+        this.stubWagon.addTransferListener(mockTransferListener);
+        Assert.assertTrue(spyTransferEventSupport.hasTransferListener(mockTransferListener));
+    }
+
+    @Test
+    public void testRemoveTransferListener() {
+        final TransferListener mockTransferListener = Mockito.mock(TransferListener.class);
+        this.stubWagon.addTransferListener(mockTransferListener);
+        Assert.assertTrue(spyTransferEventSupport.hasTransferListener(mockTransferListener));
+        this.stubWagon.removeTransferListener(mockTransferListener);
+        Assert.assertFalse(spyTransferEventSupport.hasTransferListener(mockTransferListener));
+    }
+
+    @Test
+    public void testHasTransferListener() {
+        final TransferListener mockTransferListener = Mockito.mock(TransferListener.class);
+        this.spyTransferEventSupport.addTransferListener(mockTransferListener);
+        Assert.assertTrue(this.stubWagon.hasTransferListener(mockTransferListener));
     }
 
     @Test
