@@ -1,6 +1,6 @@
 # gcp-storage-wagon
 
-[![Build Status](https://travis-ci.com/lahsivjar/gcp-storage-wagon.svg?branch=master)](https://travis-ci.com/lahsivjar/gcp-storage-wagon) [![Maven Central](https://img.shields.io/maven-central/v/com.lahsivjar/gcp-storage-wagon.svg)](https://img.shields.io/maven-central/v/com.google.cloud/google-cloud-nio.svg) [![Coverage Status](https://coveralls.io/repos/github/lahsivjar/gcp-storage-wagon/badge.svg?branch=master)](https://coveralls.io/github/lahsivjar/gcp-storage-wagon?branch=master)
+[![Build Status](https://travis-ci.com/lahsivjar/gcp-storage-wagon.svg?branch=master)](https://travis-ci.com/lahsivjar/gcp-storage-wagon) [![Maven Central](https://img.shields.io/maven-central/v/com.lahsivjar/gcp-storage-wagon.svg)](https://search.maven.org/artifact/com.lahsivjar/gcp-storage-wagon) [![Coverage Status](https://coveralls.io/repos/github/lahsivjar/gcp-storage-wagon/badge.svg?branch=master)](https://coveralls.io/github/lahsivjar/gcp-storage-wagon?branch=master)
 
 [Maven wagon](https://maven.apache.org/wagon/) provider for [Google Cloud Storage](https://cloud.google.com/storage/). It allows publishing and downloading of artifacts from Google Cloud Storage bucket.
 
@@ -85,6 +85,9 @@ __NOTE__: It is priority based so if project id can be resolved via a higher pri
 Report any issues or bugs to https://github.com/lahsivjar/gcp-storage-wagon/issues
 
 ## Changelog
+### 1.0
+* Add support for environment variable based project id resolution
+
 ### 0.1
 * Add basic wagon for GCP storage
 * Support resolving project id via the repository url
