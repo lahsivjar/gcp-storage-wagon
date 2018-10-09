@@ -122,6 +122,68 @@ public class GcpStorageWagonTest {
     }
 
     @Test
+    public void testGetIfNewerTrue() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage spyStorage = Mockito.spy(fakeStorage());
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(spyStorage);
+        putFileUtil(storageWagon, DUMMY_FILE_NAME);
+
+        final File localDestinationFile = new File(m2EmulatedFolder.getRoot().getPath() + "/" + DUMMY_FILE_NAME);
+        Assert.assertFalse(localDestinationFile.exists());
+
+        // Currently LocalStorage doesn't handle update time so mock it
+        final BlobId blobId = BlobId.of(storageWagon.getBucket(), storageWagon.getBaseDir() + DUMMY_FILE_NAME);
+        final Blob spyBlob = Mockito.spy(spyStorage.get(blobId));
+        Mockito.when(spyBlob.getUpdateTime()).thenReturn(System.currentTimeMillis());
+        Mockito.when(spyStorage.get(blobId)).thenReturn(spyBlob);
+
+        final boolean newer = storageWagon.getIfNewer(DUMMY_FILE_NAME, localDestinationFile, 0L);
+
+        Assert.assertTrue(newer);
+        Assert.assertTrue(localDestinationFile.exists());
+    }
+
+    @Test
+    public void testGetIfNewerFalse() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage spyStorage = Mockito.spy(fakeStorage());
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(spyStorage);
+        putFileUtil(storageWagon, DUMMY_FILE_NAME);
+
+        final File localDestinationFile = new File(m2EmulatedFolder.getRoot().getPath() + "/" + DUMMY_FILE_NAME);
+        Assert.assertFalse(localDestinationFile.exists());
+
+        // Currently LocalStorage doesn't handle update time so mock it
+        final BlobId blobId = BlobId.of(storageWagon.getBucket(), storageWagon.getBaseDir() + DUMMY_FILE_NAME);
+        final Blob spyBlob = Mockito.spy(spyStorage.get(blobId));
+        Mockito.when(spyBlob.getUpdateTime()).thenReturn(0L);
+        Mockito.when(spyStorage.get(blobId)).thenReturn(spyBlob);
+
+        final boolean newer = storageWagon.getIfNewer(DUMMY_FILE_NAME, localDestinationFile, System.currentTimeMillis());
+
+        Assert.assertFalse(newer);
+        Assert.assertFalse(localDestinationFile.exists());
+    }
+
+    @Test
+    public void testGetIfNewerNull() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage spyStorage = Mockito.spy(fakeStorage());
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(spyStorage);
+        putFileUtil(storageWagon, DUMMY_FILE_NAME);
+
+        final File localDestinationFile = new File(m2EmulatedFolder.getRoot().getPath() + "/" + DUMMY_FILE_NAME);
+        Assert.assertFalse(localDestinationFile.exists());
+
+        // This is the default behavior of LocalStorage's fake rpc implementation i.e. it gives null update timestamp
+        final boolean newer = storageWagon.getIfNewer(DUMMY_FILE_NAME, localDestinationFile, System.currentTimeMillis());
+
+        Assert.assertTrue(newer);
+        Assert.assertTrue(localDestinationFile.exists());
+
+    }
+
+    @Test
     public void testResourceExists() throws ConnectionException, AuthenticationException,
             IOException, AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
         final Storage storage = fakeStorage();
@@ -161,6 +223,13 @@ public class GcpStorageWagonTest {
         final List<String> actualFiles = storageWagon.getFileList("com");
 
         Assert.assertSame(actualFiles.size(), 2);
+    }
+
+    @Test
+    public void testDisconnect() throws ConnectionException {
+        final GcpStorageWagon spyStorageWagon = Mockito.spy(new GcpStorageWagon(fakeStorage()));
+        spyStorageWagon.disconnect();
+        Mockito.verify(spyStorageWagon).disconnectInternal();
     }
 
 }

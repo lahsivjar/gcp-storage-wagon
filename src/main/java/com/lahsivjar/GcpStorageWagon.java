@@ -117,10 +117,16 @@ public class GcpStorageWagon extends AbstractWagon {
             throw new ResourceDoesNotExistException(String.format("%s does not exist", fullResourceName));
         }
 
-        final long remoteTimestamp = blob.getUpdateTime();
-        final boolean isNewer = remoteTimestamp > timestamp;
-
-        LOGGER.debug("Resource {} timestamped as {} on remote vs {} on local", fullResourceName, remoteTimestamp, timestamp);
+        final Long remoteTimestamp = blob.getUpdateTime();
+        final boolean isNewer;
+        if (remoteTimestamp == null) {
+            LOGGER.warn("Resource {} has null timestamp, forcing download", resourceName);
+            isNewer = true;
+        } else {
+            isNewer = remoteTimestamp > timestamp;
+            LOGGER.debug("Resource {} timestamped as {} on remote vs {} on local",
+                    fullResourceName, remoteTimestamp, timestamp);
+        }
 
         if (isNewer) {
             get(resourceName, destination);
