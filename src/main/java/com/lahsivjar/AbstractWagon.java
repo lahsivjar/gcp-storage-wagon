@@ -160,6 +160,7 @@ abstract class AbstractWagon implements Wagon {
     void createParentDirectories(File destination) throws TransferFailedException {
         fireTransferDebug("Attempting to create parent directories for destination: " + destination.getName());
         File destinationDirectory = destination.getParentFile();
+        if (destinationDirectory == null) return;
         try {
             destinationDirectory = destinationDirectory.getCanonicalFile();
         } catch (IOException e) {

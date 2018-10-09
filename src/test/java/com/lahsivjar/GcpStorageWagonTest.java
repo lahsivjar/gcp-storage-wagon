@@ -108,6 +108,15 @@ public class GcpStorageWagonTest {
         Assert.assertTrue(blob.exists());
     }
 
+    @Test(expected = ResourceDoesNotExistException.class)
+    public void testPutNoResource() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage storage = fakeStorage();
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(storage);
+        storageWagon.connect(fakeRepository());
+        storageWagon.put(new File("does-not-exist"), "will-fail-before");
+    }
+
     @Test
     public void testGet() throws IOException, ConnectionException, AuthenticationException,
             AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
@@ -119,6 +128,17 @@ public class GcpStorageWagonTest {
         Assert.assertFalse(localDestinationFile.exists());
         storageWagon.get(DUMMY_FILE_NAME, localDestinationFile);
         Assert.assertTrue(localDestinationFile.exists());
+    }
+
+    @Test(expected = ResourceDoesNotExistException.class)
+    public void testGetNoResource() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage storage = fakeStorage();
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(storage);
+        storageWagon.connect(fakeRepository());
+
+        final File localDestinationFile = new File(m2EmulatedFolder.getRoot().getPath() + "/" + DUMMY_FILE_NAME);
+        storageWagon.get(DUMMY_FILE_NAME, localDestinationFile);
     }
 
     @Test
@@ -181,6 +201,17 @@ public class GcpStorageWagonTest {
         Assert.assertTrue(newer);
         Assert.assertTrue(localDestinationFile.exists());
 
+    }
+
+    @Test(expected = ResourceDoesNotExistException.class)
+    public void testGetIfNewerNoResource() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage storage = fakeStorage();
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(storage);
+        storageWagon.connect(fakeRepository());
+
+        final File localDestinationFile = new File(m2EmulatedFolder.getRoot().getPath() + "/" + DUMMY_FILE_NAME);
+        storageWagon.getIfNewer(DUMMY_FILE_NAME, localDestinationFile, System.currentTimeMillis());
     }
 
     @Test
