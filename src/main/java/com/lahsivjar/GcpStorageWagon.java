@@ -23,8 +23,6 @@ import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,10 +30,10 @@ public class GcpStorageWagon extends AbstractWagon {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GcpStorageWagon.class);
 
+    private GcpResourceIdManager resourceIdManager = GcpResourceIdManager.getInstance();
     private Storage storage;
-    private String bucket;
-    private String projectId;
     private String baseDir;
+    private GcpResourceId gcpResourceId;
 
     public GcpStorageWagon() {
 
@@ -49,23 +47,12 @@ public class GcpStorageWagon extends AbstractWagon {
     @Override
     void connectInternal() throws ConnectionException, AuthenticationException {
         final Repository repository = getRepository();
-        final String host = repository.getHost();
-        final String[] projectIdAndBucket = host.split("#");
-        if (projectIdAndBucket.length != 2) {
-            throw new ConnectionException(
-                    String.format("Cannot resolve project id or bucket name, expected format is project-id#bucket but received %s", host));
-        }
-        this.projectId = projectIdAndBucket[0];
-        this.bucket = projectIdAndBucket[1];
 
-        String baseDir = repository.getBasedir().substring(1);
-        if (!baseDir.endsWith("/")) {
-            baseDir += "/";
-        }
-        this.baseDir = baseDir;
+        this.gcpResourceId = resourceIdManager.get(repository);
+        this.baseDir = parseBaseDir(repository);
 
         LOGGER.debug("Initiating connection to GCP storage using project id {} and to bucket {} with base directory {}",
-                this.projectId, this.bucket, this.baseDir);
+                this.gcpResourceId.getProjectId(), this.gcpResourceId.getBucket(), this.baseDir);
 
         if (this.storage == null) {
             final StorageOptions storageOptions = buildStorageOptions();
@@ -76,9 +63,8 @@ public class GcpStorageWagon extends AbstractWagon {
     @Override
     void disconnectInternal() throws ConnectionException {
         this.baseDir = null;
-        this.projectId = null;
-        this.bucket = null;
         this.storage = null;
+        this.gcpResourceId = null;
     }
 
     @Override
@@ -142,14 +128,14 @@ public class GcpStorageWagon extends AbstractWagon {
 
         firePutInitiated(resource, source);
 
-        final BlobId blobId = BlobId.of(this.bucket, fullResourceName);
+        final BlobId blobId = BlobId.of(this.gcpResourceId.getBucket(), fullResourceName);
         final String contentType = URLConnection.guessContentTypeFromName(source.getName());
         final BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
                 .setContentType(contentType)
                 .build();
         firePutStarted(resource, source);
         final TransferEvent transferProgressEvent = buildTransferProgressEvent(resource, TransferEvent.REQUEST_PUT);
-        try (final WriteChannel writer = storage.writer(blobInfo)) {
+        try (final WriteChannel writer = this.storage.writer(blobInfo)) {
             byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
             try (InputStream input = new FileInputStream(source)) {
                 int limit;
@@ -185,7 +171,8 @@ public class GcpStorageWagon extends AbstractWagon {
     public List<String> getFileList(String prefix)
             throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         final String fullPrefix = getKey(prefix);
-        final Page<Blob> page = this.storage.list(this.bucket, Storage.BlobListOption.prefix(fullPrefix));
+        final Page<Blob> page = this.storage.list(this.gcpResourceId.getBucket(),
+                Storage.BlobListOption.prefix(fullPrefix));
         final Iterable<Blob> blobIterable = page.iterateAll();
         final List<String> allFileList = new ArrayList<>();
 
@@ -205,7 +192,7 @@ public class GcpStorageWagon extends AbstractWagon {
     }
 
     private Blob getBlob(final String resource) throws TransferFailedException {
-        final BlobId blobId = BlobId.of(this.bucket, resource);
+        final BlobId blobId = BlobId.of(this.gcpResourceId.getBucket(), resource);
         final Blob blob;
         try {
             blob = this.storage.get(blobId);
@@ -251,7 +238,7 @@ public class GcpStorageWagon extends AbstractWagon {
     private StorageOptions buildStorageOptions() {
         return StorageOptions.newBuilder()
                 .setTransportOptions(buildTransportOptions())
-                .setProjectId(this.projectId)
+                .setProjectId(this.gcpResourceId.getProjectId())
                 .build();
     }
 
@@ -260,18 +247,26 @@ public class GcpStorageWagon extends AbstractWagon {
     }
 
     @VisibleForTesting
-    String getProjectId() {
-        return this.projectId;
+    String getProjectId(){
+        return this.gcpResourceId.getProjectId();
     }
 
     @VisibleForTesting
     String getBucket() {
-        return this.bucket;
+        return this.gcpResourceId.getBucket();
     }
 
     @VisibleForTesting
     String getBaseDir() {
         return this.baseDir;
+    }
+
+    private static String parseBaseDir(Repository repository) {
+        String baseDir = repository.getBasedir().substring(1);
+        if (!baseDir.endsWith("/")) {
+            baseDir += "/";
+        }
+        return baseDir;
     }
 
 }
