@@ -78,11 +78,17 @@ Project id of GCP can be resolved in the following two ways(in decreasing priori
 
 __NOTE__: It is priority based so if project id can be resolved via a higher priority resolver then the lower priority won't be considered
 
+## Environment variable interpolation
+Hash based project id resolution scheme supports environment variable interpolation by specifying the repository url as `gs://${env.GCP_PROJECT_ID}#${env.BUCKET_NAME}` with `GCP_PROJECT_ID` and `BUCKET_NAME` exported as environment variables.
+
 ## Issues
 
 Report any issues or bugs to https://github.com/lahsivjar/gcp-storage-wagon/issues
 
 ## Changelog
+### 2.0
+* Environment variable interpolation for hash separated project id resolution
+
 ### 1.0
 * Add support for environment variable based project id resolution
 

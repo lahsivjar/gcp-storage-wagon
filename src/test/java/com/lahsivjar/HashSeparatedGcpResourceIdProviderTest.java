@@ -29,4 +29,19 @@ public class HashSeparatedGcpResourceIdProviderTest {
         provider.get(mockRepository).get();
     }
 
+    @Test
+    public void testInterpolation() {
+        final HashSeparatedGcpResourceIdProvider spyProvider =
+                Mockito.spy(new HashSeparatedGcpResourceIdProvider());
+        final Repository mockRepository = Mockito.mock(Repository.class);
+        Mockito.when(mockRepository.getHost()).thenReturn("${env.GCP_PROJECT_ID}#${env.BUCKET_NAME}");
+
+        Mockito.when(spyProvider.getFromEnv("GCP_PROJECT_ID")).thenReturn("test-project-id");
+        Mockito.when(spyProvider.getFromEnv("BUCKET_NAME")).thenReturn("test-bucket");
+
+        final GcpResourceId gcpResourceId = spyProvider.get(mockRepository).get();
+        Assert.assertEquals("test-project-id", gcpResourceId.getProjectId());
+        Assert.assertEquals("test-bucket", gcpResourceId.getBucket());
+    }
+
 }

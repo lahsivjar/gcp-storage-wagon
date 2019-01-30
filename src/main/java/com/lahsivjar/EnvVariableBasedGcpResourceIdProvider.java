@@ -22,5 +22,4 @@ final class EnvVariableBasedGcpResourceIdProvider implements GcpResourceIdProvid
     String getProjectIdFromEnv() {
         return System.getenv(WAGON_GCP_PROJECT_ID);
     }
-
 }
