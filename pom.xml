@@ -6,7 +6,7 @@
 
     <groupId>com.lahsivjar</groupId>
     <artifactId>gcp-storage-wagon</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Maven wagon provider for google cloud storage</description>
