@@ -17,8 +17,12 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GcpStorageWagonTest {
 
@@ -50,13 +54,17 @@ public class GcpStorageWagonTest {
 
     private void writeContentToFile(File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))){
-            writer.write(DUMMY_FILE_CONTENT);
+            // A few kbs worth of file
+            for (int i = 0; i < 2048; i++) {
+                writer.write(DUMMY_FILE_CONTENT);
+            }
         }
     }
 
     private void putFileUtil(GcpStorageWagon storageWagon, String destinationPath) throws IOException, ConnectionException,
             AuthenticationException, AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
-        final File sourceFile = sourceFolder.newFile(DUMMY_FILE_NAME);
+        final Path fullPath = Paths.get(destinationPath);
+        final File sourceFile = sourceFolder.newFile(fullPath.getFileName().toString());
 
         writeContentToFile(sourceFile);
         storageWagon.connect(fakeRepository());
@@ -106,6 +114,44 @@ public class GcpStorageWagonTest {
         Blob blob = storage.get(BlobId.of(DUMMY_BUCKET, DUMMY_BASE_DIR + DUMMY_FILE_NAME));
         Assert.assertNotNull(blob);
         Assert.assertTrue(blob.exists());
+    }
+
+    @Test
+    public void testPutMultiple() throws InterruptedException {
+        final int threadCount = 20;
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        final CountDownLatch simultaneousStartLatch = new CountDownLatch(threadCount);
+        final CountDownLatch finishLatch = new CountDownLatch(threadCount);
+        final List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>(threadCount));
+
+        final Storage storage = fakeStorage();
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(storage);
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    simultaneousStartLatch.countDown();
+                    simultaneousStartLatch.await();
+
+                    final String destPath = UUID.randomUUID().toString() + "/" +  UUID.randomUUID().toString() + DUMMY_FILE_NAME;
+                    putFileUtil(storageWagon, destPath);
+
+                    final Blob blob = storage.get(BlobId.of(DUMMY_BUCKET, DUMMY_BASE_DIR + destPath));
+                    Assert.assertNotNull(blob);
+                    Assert.assertTrue(blob.exists());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    exceptions.add(e);
+                } finally {
+                    finishLatch.countDown();
+                }
+            });
+        }
+
+        finishLatch.await();
+
+        Assert.assertTrue("Exception occurred during put files", exceptions.isEmpty());
     }
 
     @Test(expected = ResourceDoesNotExistException.class)
