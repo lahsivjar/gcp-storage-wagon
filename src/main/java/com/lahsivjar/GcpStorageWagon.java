@@ -23,6 +23,7 @@ import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,23 +136,46 @@ public class GcpStorageWagon extends AbstractWagon {
                 .build();
         firePutStarted(resource, source);
         final TransferEvent transferProgressEvent = buildTransferProgressEvent(resource, TransferEvent.REQUEST_PUT);
-        try (final WriteChannel writer = this.storage.writer(blobInfo)) {
-            byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-            try (InputStream input = new FileInputStream(source)) {
-                int limit;
-                while ((limit = input.read(buffer)) >= 0) {
-                    writer.write(ByteBuffer.wrap(buffer, 0, limit));
-                    fireTransferProgress(transferProgressEvent, buffer, limit);
-                }
-            }
-        } catch (FileNotFoundException fe) {
-            throw new ResourceDoesNotExistException(String.format("%s does not exist", source.getName()), fe);
+
+        if (!source.exists()) {
+            throw new ResourceDoesNotExistException(String.format("%s does not exist", source.getName()));
+        }
+
+        long fileSize;
+        try {
+            fileSize = Files.size(source.toPath());
         } catch (IOException e) {
             throw new TransferFailedException(String.format("Failed to transfer %s to %s",
                     source.getName(), destination), e);
-        } catch (StorageException se) {
-            throw new TransferFailedException(String.format("Failed to transfer %s to %s",
-                    source.getName(), destination), se);
+        }
+
+        if (fileSize > 1_000_000) {
+            try (final WriteChannel writer = this.storage.writer(blobInfo)) {
+                byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+                try (InputStream input = new FileInputStream(source)) {
+                    int limit;
+                    while ((limit = input.read(buffer)) >= 0) {
+                        writer.write(ByteBuffer.wrap(buffer, 0, limit));
+                        fireTransferProgress(transferProgressEvent, buffer, limit);
+                    }
+                }
+            } catch (IOException e) {
+                throw new TransferFailedException(String.format("Failed to transfer %s to %s",
+                        source.getName(), destination), e);
+            } catch (StorageException se) {
+                throw new TransferFailedException(String.format("Failed to transfer %s to %s",
+                        source.getName(), destination), se);
+            }
+        } else {
+            byte[] bytes;
+            try {
+                bytes = Files.readAllBytes(source.toPath());
+            } catch (IOException e) {
+                throw new TransferFailedException(String.format("Failed to transfer %s to %s",
+                        source.getName(), destination), e);
+            }
+            this.storage.create(blobInfo, bytes);
+            fireTransferProgress(transferProgressEvent, bytes, bytes.length);
         }
         firePutCompleted(resource, source);
     }
