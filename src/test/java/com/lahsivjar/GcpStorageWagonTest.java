@@ -4,6 +4,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper;
+import com.google.common.io.Files;
 import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
@@ -54,6 +55,11 @@ public class GcpStorageWagonTest {
         }
     }
 
+    private void writeContentToFile(File file, int size) throws IOException {
+        final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+        randomAccessFile.setLength(size);
+    }
+
     private void putFileUtil(GcpStorageWagon storageWagon, String destinationPath) throws IOException, ConnectionException,
             AuthenticationException, AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
         final File sourceFile = sourceFolder.newFile(DUMMY_FILE_NAME);
@@ -102,6 +108,22 @@ public class GcpStorageWagonTest {
         final Storage storage = fakeStorage();
         final GcpStorageWagon storageWagon = new GcpStorageWagon(storage);
         putFileUtil(storageWagon, DUMMY_FILE_NAME);
+
+        Blob blob = storage.get(BlobId.of(DUMMY_BUCKET, DUMMY_BASE_DIR + DUMMY_FILE_NAME));
+        Assert.assertNotNull(blob);
+        Assert.assertTrue(blob.exists());
+    }
+
+    @Test
+    public void testPut_fileGreaterThan1MB() throws IOException, ConnectionException, AuthenticationException,
+            AuthorizationException, ResourceDoesNotExistException, TransferFailedException {
+        final Storage storage = fakeStorage();
+        final GcpStorageWagon storageWagon = new GcpStorageWagon(storage);
+        final File sourceFile = sourceFolder.newFile(DUMMY_FILE_NAME);
+
+        writeContentToFile(sourceFile, 1024 * 1024);
+        storageWagon.connect(fakeRepository());
+        storageWagon.put(sourceFile, DUMMY_FILE_NAME);
 
         Blob blob = storage.get(BlobId.of(DUMMY_BUCKET, DUMMY_BASE_DIR + DUMMY_FILE_NAME));
         Assert.assertNotNull(blob);
