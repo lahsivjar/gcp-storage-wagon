@@ -44,20 +44,20 @@
     </distributionManagement>
 
     <properties>
-        <gcp.storage.version>1.40.0</gcp.storage.version>
-        <gcp.nio.version>0.66.0-alpha</gcp.nio.version>
-        <wagon.version>3.2.0</wagon.version>
+        <gcp.storage.version>1.102.0</gcp.storage.version>
+        <gcp.nio.version>0.120.0-alpha</gcp.nio.version>
+        <wagon.version>3.3.4</wagon.version>
         <logback.version>1.2.3</logback.version>
-        <slf4j.version>1.7.25</slf4j.version>
-        <junit.version>4.12</junit.version>
+        <slf4j.version>1.7.29</slf4j.version>
+        <junit.version>5.5.2</junit.version>
         <mockito.version>2.23.0</mockito.version>
         <coveralls.version>4.3.0</coveralls.version>
-        <maven.source.version>3.0.1</maven.source.version>
-        <maven.javadoc.version>3.0.1</maven.javadoc.version>
+        <maven.source.version>3.2.0</maven.source.version>
+        <maven.javadoc.version>3.1.1</maven.javadoc.version>
         <maven.gpg.version>1.6</maven.gpg.version>
 
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -74,9 +74,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
