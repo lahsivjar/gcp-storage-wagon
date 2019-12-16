@@ -86,6 +86,9 @@ Hash based project id resolution scheme supports environment variable interpolat
 Report any issues or bugs to https://github.com/lahsivjar/gcp-storage-wagon/issues
 
 ## Changelog
+### 3.0
+* Update module to support Java 11
+
 ### 2.1
 * (Bugfix #19) Handle small files in single blob request
 
